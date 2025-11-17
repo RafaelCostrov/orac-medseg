@@ -1,0 +1,140 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+  background-image: url("../img/fundo-orac-med.png");
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  background-color: rgba(255, 255, 255, 0.7);
+  padding: 40px 30px;
+  border-radius: 20px;
+  box-shadow: 0 0 10px #00000033;
+  width: 100%;
+  max-width: 420px;
+}
+
+.card-text {
+  text-align: center;
+  font-size: 16px;
+  margin-bottom: 20px;
+  color: #444;
+}
+
+.logo {
+  display: block;
+  margin: 0 auto 30px auto;
+  width: 250px;
+}
+
+.input-group {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+input {
+  font-family: "Poppins", sans-serif;
+}
+
+input::placeholder {
+  font-family: "Poppins", sans-serif;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 40px 12px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  color: green;
+}
+
+.input-group input:focus {
+  border: 1px solid orange;
+  outline: none;
+}
+
+.input-group .icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.btn {
+  width: 100%;
+  padding: 12px;
+  background: #2e993f;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  transition: background 0.3s, ;
+  font-family: "Poppins", sans-serif;
+  font-size: 16px;
+}
+
+.btn:hover {
+  background: #278a38;
+  color: orange;
+  transition-duration: 500ms;
+}
+
+.forgot {
+  text-align: center;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+}
+
+.forgot a {
+  color: rgb(109, 109, 109);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 500ms;
+  display: inline-block;
+}
+
+.forgot a:hover {
+  color: #278a38;
+  transition-duration: 500ms;
+  transform: scale(1.05);
+}
+
+/* Toast */
+
+.uk-notification {
+    z-index: 9999 !important;
+    padding: 5px;
+}
+
+
+.uk-notification-message {
+    border-radius: 12px;
+    font-family: "Poppins", sans-serif;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+/*Toast  */
+
+/* ========= RESPONSIVO ========= */
+@media (max-width: 1280px){
+  .login-card, .login-box, .card{
+    width: min(560px, 70vw);
+    margin: 24px auto;
+  }
+}

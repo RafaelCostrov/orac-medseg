@@ -1,0 +1,29 @@
+{% extends "baseLogin.html" %}
+
+{% block body %}
+
+
+
+<div class="container">
+  <div class="card">
+    <img src="{{url_for('static', filename='/img/Logo.png')}}" alt="Logo" class="logo" />
+    <p class="card-text">
+      Preencha o seu e-mail abaixo para receber um e-mail com o novo acesso.
+    </p>
+    <div class="input-group">
+      <input type="email" id="emailInput" placeholder="E-mail" />
+    </div>
+    <button id="redefinir" class="btn">Enviar</button>
+    <p class="forgot">
+      <a href="{{url_for('login')}}">Voltar ao login</a>
+    </p>
+
+  </div>
+</div>
+
+{% endblock body %}
+
+
+{% block scripts %}
+<script src="{{url_for('static', filename='js/redefinir/redefinir.js')}}"></script>
+{% endblock scripts %}

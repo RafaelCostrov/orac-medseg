@@ -1,0 +1,32 @@
+{% extends "baseLogin.html" %}
+
+{% block body %}
+
+
+<div class="container">
+  <form class="card">
+    <img src=" {{url_for('static', filename='/img/Logo.png')}}" alt="Logo" class="logo" />
+    <div class="input-group">
+      <input type="email" placeholder="E-mail" id="email_usuario" />
+      <span class="icon">
+        <img src=" {{url_for('static', filename='/img/icons/user.png')}}" alt="Usuário" width="20" />
+      </span>
+    </div>
+    <div class="input-group">
+      <input type="password" placeholder="Senha" id="senha" />
+      <span class="icon" onclick="togglePassword()">
+        <img src="{{url_for('static', filename='/img/icons/hide.png')}}" alt="Mostrar senha" id="eyeIcon" width="20" />
+      </span>
+    </div>
+    <button class="btn" id="button-login" value="login">Entrar</button>
+    <p class="forgot">
+      <a class="forgot-text" href="{{url_for('redefinir')}}">Esqueceu a senha?</a>
+    </p>
+  </form>
+</div>
+
+{% endblock body %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/login/realizar_login.js') }}" defer></script>
+{% endblock scripts %}

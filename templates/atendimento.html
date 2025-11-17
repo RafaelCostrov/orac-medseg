@@ -1,0 +1,202 @@
+{% extends "base.html"%}
+
+{% block titleCss %}
+<title>Atendimento - Orac</title>
+<link rel="stylesheet" href="{{url_for('static', filename='/css/atendimento.css')}}" />
+{% endblock titleCss %}
+
+{% block body %}
+
+<!-- Conteúdo principal -->
+<main class="container">
+  <section class="faixa">
+    <div class="titulo-faixa">
+      <h2>Ficha de <span class="titulo-verde">Atendimento</span></h2>
+      <p class="texto-faixa">Para uma ajuda rápida, use as opções abaixo:</p>
+    </div>
+    <div class="botoes-faixa">
+      <button class="verde" uk-toggle="target: #modal-cadastro-cliente">Cadastrar cliente</button>
+      <button class="branco" uk-toggle="target: #modal-cadastro-exame">Cadastrar exame</button>
+      <button class="verde" id="exportXls">Relatório do dia</button>
+    </div>
+    <img src="{{ url_for('static', filename='img/Forms-pana.png') }}" alt="Mulher preenchendo formulário"
+      class="mulher-formulario" />
+  </section>
+  <section class="formulario">
+    <form id="form-atendimento" autocomplete="off">
+      <div class="form-grid">
+
+        <!-- Empresa -->
+        <div class="form-group">
+          <label for="empresa">Empresa</label>
+          <select class="dropdown-empresa" id="empresa" required>
+            <option value="" disabled selected hidden>Selecione</option>
+          </select>
+        </div>
+
+        <!-- Colaborador -->
+        <div class="form-group">
+          <label for="colaborador">Colaborador</label>
+          <input type="text" id="colaborador" placeholder="Nome" />
+        </div>
+
+        <!-- Tipo de Exame -->
+        <div class="form-group">
+          <label for="tipo-exame">Tipo de Exame</label>
+          <select id="tipo-exame" required>
+            <option value="" disabled selected hidden>Selecione</option>
+            <option value="admissional">Admissional</option>
+            <option value="demissional">Demissional</option>
+            <option value="periodico">Periódico</option>
+            <option value="mudanca_funcao">Mudança de Função</option>
+            <option value="retorno_trabalho">Retorno ao Trabalho</option>
+            <option value="outros">Outros</option>
+          </select>
+        </div>
+
+        <!-- Select dos Exames -->
+        <div class="form-group">
+          <label for="exames">Selecione os exames</label>
+          <select multiple multiselect-search="true" multiselect-select-all="true"
+            class="modal-exames-multiselect-dropdown" id="exames">
+          </select>
+        </div>
+
+
+        <!-- Valor Total (somente leitura) -->
+        <div class="form-group">
+          <label for="valor-total">Valor Total</label>
+          <input id="valor-total" type="text" class="readonly" readonly placeholder="R$ 0,00" />
+        </div>
+      </div>
+
+      <!-- Lista de exames selecionados -->
+      <div class="exames-selecionados">
+        <div>
+          <label>Exames selecionados</label>
+          <ul id="lista-exames"></ul>
+        </div>
+        <div>
+          <label>Exames inclusos</label>
+          <ul id="exames-cliente"></ul>
+        </div>
+      </div>
+      <div class="botoes">
+        <button class="remover" id="remover">Limpar</button>
+        <button class="enviar" id="enviar">Enviar</button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<!-- Modal Cadastro Cliente -->
+<div id="modal-cadastro-cliente" uk-modal>
+  <div class="uk-modal-dialog uk-margin-auto-vertical uk-modal-body modal-body-cadastro">
+    <div class="modal-container-cadastro">
+
+      <!-- botão fechar -->
+      <button class="uk-modal-close-default" type="button" uk-close></button>
+
+      <!-- título -->
+      <h2 class="uk-modal-title">Novo Cliente</h2>
+      <hr>
+
+      <!-- corpo -->
+      <form id="formCadastro" autocomplete="off" class="grid-cadastro">
+
+        <!-- ======= CLIENTES ======= -->
+        <div class="input-label" data-for="clientes">
+          <label for="cnpj_cliente">CNPJ do cliente</label>
+          <div class="input-wrapper">
+            <input id="cnpj_cliente" type="text" placeholder="00.000.000/0000-00">
+            <button id="pesquisar_cnpj" type="button">
+              <img src="{{ url_for('static', filename='/img/icons/search.png') }}" alt="Pesquisar">
+            </button>
+          </div>
+        </div>
+
+        <div class="input-label" data-for="clientes">
+          <label for="nome_cliente">Nome do cliente</label>
+          <input id="nome_cliente" type="text" placeholder="Razão/Nome">
+        </div>
+
+        <div class="input-label" data-for="clientes">
+          <label for="tipo_cliente">Tipo do cliente</label>
+          <select id="tipo_cliente">
+            <option value="cliente">Cliente</option>
+            <option value="credenciado">Credenciado</option>
+            <option value="servico_prestado">Serviço Prestado</option>
+            <option value="particular">Particular</option>
+          </select>
+        </div>
+
+        <div class="input-label" data-for="clientes">
+          <label for="exames-select">Exames Inclusos</label>
+          <select multiple multiselect-search="true" multiselect-select-all="true"
+            class="modal-tipoCl-filtro-multiselect-dropdown" id="exames-select">
+          </select>
+        </div>
+
+        <!-- footer -->
+        <div class="modal-footer">
+          <button class="remover" type="button" id="button-cancelar-cliente">Cancelar</button>
+          <button class="enviar" id="button-cadastro-cliente" type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal Cadastro Exame -->
+<div id="modal-cadastro-exame" uk-modal>
+  <div class="uk-modal-dialog uk-margin-auto-vertical uk-modal-body modal-body-cadastro">
+    <div class="modal-container-cadastro">
+
+      <!-- botão fechar -->
+      <button class="uk-modal-close-default" type="button" uk-close></button>
+
+      <!-- título -->
+      <h2 class="uk-modal-title">Novo Exame</h2>
+      <hr>
+
+      <!-- corpo -->
+      <form id="formCadastro" autocomplete="off" class="grid-cadastro">
+
+        <!-- ======= EXAMES ======= -->
+        <div class="input-label" data-for="exames">
+          <label for="nome_exame">Nome do exame</label>
+          <input id="nome_exame" type="text" placeholder="Ex.: Audiometria">
+        </div>
+
+        <div class="input-label" data-for="exames">
+          <label for="is_interno">Interno?</label>
+          <select id="is_interno">
+            <option value="1">Sim</option>
+            <option value="0">Não</option>
+          </select>
+        </div>
+
+        <div class="input-label" data-for="exames">
+          <label for="valor_exame">Valor (R$)</label>
+          <input id="valor_exame" type="number" step="0.01" min="0" placeholder="0,00">
+        </div>
+
+        <!-- footer -->
+        <div class="modal-footer">
+          <button class="remover" type="button" id="button-cancelar-exame">Voltar</button>
+          <button class="enviar" id="button-cadastro-exame" type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{% endblock body %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/atendimento/cadastro.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/atendimento/carregar.js') }}" defer></script>
+<script src="{{url_for('static', filename='/js/multiselect-dropdown.js')}}"></script>
+{% endblock scripts %}
