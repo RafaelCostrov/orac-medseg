@@ -1,3 +1,11 @@
+"""
+Módulo services.exame_service
+
+Camada de serviço para operações de negócio relacionadas a Exame:
+- validação mínima,
+- transformação de modelos para JSON,
+- exportação para Excel e TXT.
+"""
 from model.exame import Exame
 from repository.exame_repository import ExameRepository
 import json
@@ -6,12 +14,39 @@ from io import BytesIO
 
 
 class ExameService():
+    """
+    Serviço de alto nível para gerenciar exames.
+
+    Atributos:
+    - repositorio: instância de ExameRepository.
+
+    Métodos:
+    - cadastrar_exame(exame)
+    - listar_todos_exames()
+    - filtrar_exames(...)
+    - remover_exame(id_exame)
+    - atualizar_exame(...)
+    - exportar_excel(...)
+    - exportar_txt(...)
+    """
     repositorio = ExameRepository()
 
     def cadastrar_exame(self, exame: Exame):
+        """
+        Persiste um novo exame.
+
+        Args:
+            exame (Exame)
+        """
         self.repositorio.adicionar_exame(exame=exame)
 
     def listar_todos_exames(self):
+        """
+        Retorna todos os exames no formato JSON serializável.
+
+        Returns:
+            list[dict]: lista de exames.
+        """
         exames = self.repositorio.listar_todos_exames()
         lista = []
         for exame in exames:
@@ -26,6 +61,18 @@ class ExameService():
 
     def filtrar_exames(self, id_exame: int, nome_exame: str, is_interno: bool, min_valor: float, max_valor: float, por_pagina=50,
                        pagina: int = 1, order_by: str = "nome_cliente", order_dir: str = "desc"):
+        """
+        Filtra exames delegando ao repositório e formata o resultado.
+
+        Args:
+            id_exame, nome_exame, is_interno, min_valor, max_valor: filtros.
+            por_pagina (int|None): itens por página (None = sem paginação).
+            pagina (int): página atual.
+            order_by (str), order_dir (str): ordenação.
+
+        Returns:
+            dict: {'exames': [...], 'total': int, 'total_filtrado': int}
+        """
         if por_pagina is not None:
             offset = (pagina - 1) * por_pagina
         else:
@@ -58,9 +105,21 @@ class ExameService():
         }
 
     def remover_exame(self, id_exame):
+        """
+        Remove exame por id.
+
+        Args:
+            id_exame (int)
+        """
         self.repositorio.remover_exame(id_exame=id_exame)
 
     def atualizar_exame(self, id_exame, nome_exame, is_interno, valor_exame):
+        """
+        Atualiza um exame e retorna a representação simplificada.
+
+        Returns:
+            dict: exame atualizado.
+        """
         exame_atualizado = self.repositorio.atualizar_exame(
             id_exame=id_exame,
             nome_exame=nome_exame,
@@ -70,7 +129,15 @@ class ExameService():
         return exame_atualizado
 
     def exportar_excel(self, id_exame: int, nome_exame: str, is_interno: bool, min_valor: float, max_valor: float):
+        """
+        Gera um arquivo Excel (BytesIO) com os exames filtrados.
 
+        Args:
+            mesmos filtros de filtrar_exames
+
+        Returns:
+            BytesIO: arquivo Excel pronto para envio via Flask send_file.
+        """
         exames_filtrados = self.filtrar_exames(
             id_exame=id_exame,
             nome_exame=nome_exame,
@@ -109,7 +176,12 @@ class ExameService():
         return output
 
     def exportar_txt(self, id_exame: int, nome_exame: str, is_interno: bool, min_valor: float, max_valor: float):
+        """
+        Gera um arquivo TXT (tab-separated) com os exames filtrados.
 
+        Returns:
+            BytesIO: fluxo pronto para envio.
+        """
         exames_filtrados = self.filtrar_exames(
             id_exame=id_exame,
             nome_exame=nome_exame,

@@ -1,3 +1,13 @@
+"""
+Módulo routes.usuario_routes
+
+Define rotas Flask relacionadas à autenticação e gestão de usuários:
+- login, logout, reset de senha,
+- cadastro, listagem, filtragem, remoção e atualização de usuários,
+- exportação para XLS e TXT.
+
+Cada rota usa os decoradores de autenticação/autorização do módulo auxiliar.auxiliar.
+"""
 from flask import Blueprint, request, jsonify, session, send_file
 from services.usuario_service import UsuarioService
 from datetime import datetime
@@ -10,6 +20,20 @@ service = UsuarioService()
 
 @usuario_bp.route('/login', methods=['POST'])
 def login():
+    """
+    Rota POST para autenticação de usuário.
+
+    Corpo JSON esperado:
+    {
+      "email_usuario": str,
+      "senha": str
+    }
+
+    Retorna:
+        200 + dados do usuário em sessão em caso de sucesso,
+        401 em credenciais inválidas,
+        400 em erro.
+    """
     try:
         data = request.get_json()
         email_usuario = data.get('email_usuario')
@@ -41,6 +65,16 @@ def login():
 
 @usuario_bp.route('/resetar-senha', methods=['POST'])
 def resetar_senha():
+    """
+    Rota POST para reset de senha.
+
+    Corpo JSON esperado:
+    { "email_usuario": str }
+
+    Retorna:
+        200 com mensagem de envio em caso de sucesso,
+        400 em erro.
+    """
     try:
         data = request.get_json()
         email_usuario = data.get('email_usuario')
@@ -60,6 +94,12 @@ def resetar_senha():
 @usuario_bp.route('/logout', methods=['POST'])
 @login_required
 def logout():
+    """
+    Rota POST para encerrar a sessão do usuário autenticado.
+
+    Retorna:
+        200 em sucesso, 400 em erro.
+    """
     try:
         session.pop('usuario', None)
         return jsonify({
@@ -75,6 +115,15 @@ def logout():
 @usuario_bp.route('/cadastrar-usuario', methods=['POST'])
 @login_required
 def cadastrar_usuario():
+    """
+    Rota POST para cadastro de usuário.
+
+    Espera formulário multipart com campos:
+    nome_usuario, email_usuario, senha, role e opcionalmente foto.
+
+    Retorna:
+        201 com dados do usuário criado, 400 em erro ou conflito de email.
+    """
     try:
         data = request.form
         nome_usuario = data.get('nome_usuario')
@@ -108,6 +157,12 @@ def cadastrar_usuario():
 @usuario_bp.route('/listar-usuarios')
 @login_required
 def listar_todos_usuarios():
+    """
+    Rota GET que retorna todos os usuários.
+
+    Retorna:
+        200 com lista de usuários em JSON, 400 em erro.
+    """
     try:
         usuarios = service.listar_todos_usuarios()
         return jsonify({
@@ -124,6 +179,12 @@ def listar_todos_usuarios():
 @usuario_bp.route('/filtrar-usuarios', methods=['POST'])
 @login_required
 def filtrar_usuario():
+    """
+    Rota POST para filtragem de usuários.
+
+    Corpo JSON aceita filtros e paginação:
+    id_usuario, nome_usuario, email_usuario, role, pagina, por_pagina, order_by, order_dir
+    """
     try:
         data = request.get_json()
         id_usuario = data.get('id_usuario')
@@ -160,6 +221,16 @@ def filtrar_usuario():
 @login_required
 @role_required("administrador")
 def remover_usuario():
+    """
+    Rota DELETE para remoção de usuário por id.
+
+    Corpo JSON esperado:
+    { "id_usuario": int }
+
+    Restrições:
+    - um usuário não pode remover sua própria conta (retorna 403).
+    - requer papel administrador.
+    """
     try:
         data = request.get_json()
         id_usuario = data.get('id_usuario')
@@ -183,6 +254,15 @@ def remover_usuario():
 @login_required
 @role_required("administrador")
 def atualizar_usuario():
+    """
+    Rota PUT para atualização de usuário (administrador).
+
+    Espera formulário multipart com campos atualizáveis:
+    id_usuario, nome_usuario, email_usuario, senha, role, foto
+
+    Retorna:
+        200 com dados atualizados ou 400 em erro.
+    """
     try:
         data = request.form
         id_usuario = data.get('id_usuario')
@@ -217,6 +297,11 @@ def atualizar_usuario():
 @usuario_bp.route('/atualizar-conta', methods=['PUT'])
 @login_required
 def atualizar_conta():
+    """
+    Rota PUT para atualização da própria conta do usuário autenticado.
+
+    Valida que o id fornecido corresponde ao usuário em sessão.
+    """
     try:
         data = request.form
         id_usuario = data.get('id_usuario')
@@ -255,6 +340,9 @@ def atualizar_conta():
 @usuario_bp.route('/exportar-usuarios-xls', methods=['POST'])
 @login_required
 def exportar_excel():
+    """
+    Rota POST que gera e envia um arquivo .xlsx com usuários filtrados.
+    """
     try:
         data = request.get_json()
         id_usuario = data.get('id_usuario')
@@ -290,6 +378,9 @@ def exportar_excel():
 @usuario_bp.route('/exportar-usuarios-txt', methods=['POST'])
 @login_required
 def exportar_txt():
+    """
+    Rota POST que gera e envia um arquivo .txt (tab separated) com usuários filtrados.
+    """
     try:
         data = request.get_json()
         id_usuario = data.get('id_usuario')

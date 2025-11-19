@@ -1,3 +1,11 @@
+"""
+Módulo repository.atendimento_repository
+
+Repositório para operações sobre a entidade Atendimento usando SQLAlchemy.
+
+Fornece métodos para:
+- adicionar, listar, filtrar, buscar por id, remover e atualizar atendimentos.
+"""
 from sqlalchemy import func, and_
 from sqlalchemy.orm import joinedload
 from model.exame import Exame
@@ -8,10 +16,31 @@ from datetime import datetime
 
 
 class AtendimentoRepository:
+    """
+    Repositório responsável pelo acesso a dados da entidade Atendimento.
+
+    Atributos:
+    - session: sessão do SQLAlchemy a ser usada para operações.
+
+    Métodos:
+    - adicionar_atendimento(atendimento)
+    - listar_todos_atendimentos()
+    - filtrar_atendimentos(...)
+    - filtrar_por_id(id_atendimento)
+    - remover_atendimento(id_atendimento)
+    - atualizar_atendimento(...)
+    """
+
     def __init__(self):
         self.session = Session
 
     def adicionar_atendimento(self, atendimento: Atendimento):
+        """
+        Persiste um novo atendimento na base.
+
+        Args:
+            atendimento (Atendimento)
+        """
         try:
             self.session.add(atendimento)
             self.session.commit()
@@ -20,6 +49,12 @@ class AtendimentoRepository:
             raise e
 
     def listar_todos_atendimentos(self):
+        """
+        Retorna todos os atendimentos com relacionamentos carregados.
+
+        Returns:
+            list[Atendimento]
+        """
         try:
             atendimentos = self.session.query(Atendimento).options(
                 joinedload(Atendimento.exames_atendimento),
@@ -31,6 +66,19 @@ class AtendimentoRepository:
     def filtrar_atendimentos(self, id_atendimento=None, min_data=None, max_data=None, tipo_atendimento=None, usuario=None, min_valor=None,
                              max_valor=None, colaborador_atendimento=None, tipo_cliente=None, is_ativo=None, ids_clientes=None,
                              ids_exames=None, offset=None, limit=None, order_by=None, order_dir=None):
+        """
+        Filtra atendimentos por múltiplos critérios com paginação e ordenação.
+
+        Args:
+            id_atendimento (int|None), min_data (str "YYYY-MM-DD"|None), max_data (str|None),
+            tipo_atendimento (list|None), usuario (str|None), min_valor (float|None),
+            max_valor (float|None), colaborador_atendimento (str|None), tipo_cliente (list|None),
+            is_ativo (bool|None), ids_clientes (list[int]|None), ids_exames (list[int]|None),
+            offset (int|None), limit (int|None), order_by (str|None), order_dir (str|None).
+
+        Returns:
+            tuple: (resultados, total, total_filtrado, valor_total)
+        """
         try:
             query = self.session.query(Atendimento)
             total = query.count()
@@ -124,6 +172,15 @@ class AtendimentoRepository:
             raise e
 
     def filtrar_por_id(self, id_atendimento):
+        """
+        Retorna o atendimento correspondente ao id fornecido, carregando cliente e exames.
+
+        Args:
+            id_atendimento (int)
+
+        Returns:
+            Atendimento|None
+        """
         try:
             atendimento = self.session.query(Atendimento)\
                 .options(joinedload(Atendimento.cliente_atendimento).joinedload(Cliente.exames_incluidos), joinedload(Atendimento.exames_atendimento))\
@@ -133,6 +190,12 @@ class AtendimentoRepository:
             raise e
 
     def remover_atendimento(self, id_atendimento):
+        """
+        Remove atendimento por id.
+
+        Args:
+            id_atendimento (int)
+        """
         try:
             atendimento_a_remover = self.filtrar_por_id(
                 id_atendimento=id_atendimento)
@@ -143,6 +206,17 @@ class AtendimentoRepository:
 
     def atualizar_atendimento(self, id_atendimento, data_atendimento, tipo_atendimento, usuario, valor,
                               colaborador_atendimento, is_ativo, cliente_atendimento, exames_atendimento):
+        """
+        Atualiza campos de um atendimento existente e salva a transação.
+
+        Args:
+            id_atendimento (int), data_atendimento (str "DD/MM/YYYY"|None), tipo_atendimento, usuario,
+            valor, colaborador_atendimento, is_ativo, cliente_atendimento (Cliente|None),
+            exames_atendimento (list[Exame]|None)
+
+        Returns:
+            dict: representação simplificada do atendimento atualizado.
+        """
         try:
             atendimento_a_atualizar = self.filtrar_por_id(
                 id_atendimento=id_atendimento)

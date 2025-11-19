@@ -1,3 +1,12 @@
+"""
+Módulo routes.cliente_routes
+
+Define rotas Flask para operações relacionadas a clientes:
+- cadastro, listagem, filtragem, remoção, atualização,
+- busca de CNPJ via serviço externo,
+- exportação para XLS e TXT.
+Cada rota utiliza decoradores de autenticação/autorização definidos em auxiliar.auxiliar.
+"""
 from flask import Blueprint, request, jsonify, send_file
 from services.cliente_service import ClienteService
 from datetime import datetime
@@ -11,6 +20,20 @@ service = ClienteService()
 @cliente_bp.route('/cadastrar-cliente', methods=['POST'])
 @login_required
 def cadastrar_cliente():
+    """
+    Rota POST para cadastrar um cliente.
+
+    Corpo JSON esperado:
+    {
+      "nome_cliente": str,
+      "cnpj_cliente": str,
+      "tipo_cliente": str,
+      "exames_incluidos": [int]
+    }
+
+    Retorna:
+        201 em sucesso, 400 em erro ou CNPJ duplicado.
+    """
     try:
         data = request.get_json()
         nome_cliente = data.get('nome_cliente')
@@ -41,6 +64,12 @@ def cadastrar_cliente():
 @cliente_bp.route('/listar-clientes')
 @login_required
 def listar_todos_clientes():
+    """
+    Rota GET para listar todos os clientes.
+
+    Retorna:
+        JSON com lista de clientes e código 200.
+    """
     try:
         clientes = service.listar_todos_clientes()
         return jsonify({
@@ -57,6 +86,11 @@ def listar_todos_clientes():
 @cliente_bp.route('/filtrar-clientes', methods=['POST'])
 @login_required
 def filtrar_clientes():
+    """
+    Rota POST para filtrar clientes com paginação e ordenação.
+
+    Corpo JSON aceita chaves de filtro e paginação.
+    """
     try:
         data = request.get_json()
         id_cliente = data.get('id_cliente')
@@ -96,6 +130,12 @@ def filtrar_clientes():
 @login_required
 @role_required("administrador", "gestor")
 def remover_cliente():
+    """
+    Rota DELETE para remover cliente. Requer papel administrador ou gestor.
+
+    Corpo JSON:
+    { "id_cliente": int }
+    """
     try:
         data = request.get_json()
         id_cliente = data.get('id_cliente')
@@ -115,6 +155,11 @@ def remover_cliente():
 @login_required
 @role_required("administrador", "gestor")
 def atualizar_cliente():
+    """
+    Rota PUT para atualizar cliente. Requer papel administrador ou gestor.
+
+    Corpo JSON aceita os mesmos campos do cadastro.
+    """
     try:
         data = request.get_json()
         id_cliente = data.get('id_cliente')
@@ -147,6 +192,12 @@ def atualizar_cliente():
 @cliente_bp.route('/buscar-cnpj', methods=['POST'])
 @login_required
 def buscar_cnpj():
+    """
+    Rota POST que retorna o nome associado a um CNPJ usando serviço externo.
+
+    Corpo JSON:
+    { "cnpj": str }
+    """
     try:
         data = request.get_json()
         cnpj = data.get('cnpj')
@@ -168,6 +219,12 @@ def buscar_cnpj():
 @cliente_bp.route('/exportar-clientes-xls', methods=['POST'])
 @login_required
 def exportar_excel():
+    """
+    Rota POST que gera e envia um arquivo .xlsx com clientes filtrados.
+
+    Retorna:
+        Arquivo para download com mimetype apropriado.
+    """
     try:
         data = request.get_json()
         id_cliente = data.get('id_cliente')
@@ -205,6 +262,9 @@ def exportar_excel():
 @cliente_bp.route('/exportar-clientes-txt', methods=['POST'])
 @login_required
 def exportar_txt():
+    """
+    Rota POST que gera e envia um arquivo .txt (tab separated) com clientes filtrados.
+    """
     try:
         data = request.get_json()
         id_cliente = data.get('id_cliente')

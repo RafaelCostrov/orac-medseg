@@ -1,3 +1,12 @@
+"""
+Módulo routes.exame_routes
+
+Define rotas Flask para operações relacionadas a exames:
+- cadastro, listagem, filtragem, remoção, atualização,
+- exportação para XLS e TXT.
+
+Cada rota usa os decoradores de autenticação/autorização do módulo auxiliar.auxiliar.
+"""
 from flask import Blueprint, request, jsonify, send_file
 from services.exame_service import ExameService
 from model.exame import Exame
@@ -12,6 +21,19 @@ service = ExameService()
 @exame_bp.route('/cadastrar-exame', methods=['POST'])
 @login_required
 def cadastrar_exame():
+    """
+    Rota POST para cadastrar um exame.
+
+    Corpo JSON esperado:
+    {
+      "nome_exame": str,
+      "is_interno": bool,
+      "valor_exame": float | str
+    }
+
+    Retorna:
+        201 em sucesso, 400 em erro.
+    """
     try:
         data = request.get_json()
         nome_exame = data.get('nome_exame')
@@ -38,6 +60,12 @@ def cadastrar_exame():
 @exame_bp.route('/listar-exames')
 @login_required
 def listar_todos_exames():
+    """
+    Rota GET para listar todos os exames.
+
+    Retorna:
+        JSON com lista de exames e código 200.
+    """
     try:
         exames = service.listar_todos_exames()
         return jsonify({
@@ -54,6 +82,12 @@ def listar_todos_exames():
 @exame_bp.route('/filtrar-exames', methods=['POST'])
 @login_required
 def filtrar_exame():
+    """
+    Rota POST para filtrar exames com paginação e ordenação.
+
+    Corpo JSON aceita chaves de filtro:
+    id_exame, nome_exame, is_interno, min_valor, max_valor, pagina, por_pagina, order_by, order_dir
+    """
     try:
         data = request.get_json()
         id_exame = data.get('id_exame')
@@ -92,6 +126,12 @@ def filtrar_exame():
 @login_required
 @role_required("administrador", "gestor")
 def remover_exame():
+    """
+    Rota DELETE para remover exame. Requer papel administrador ou gestor.
+
+    Corpo JSON:
+    { "id_exame": int }
+    """
     try:
         data = request.get_json()
         id_exame = data.get('id_exame')
@@ -111,6 +151,12 @@ def remover_exame():
 @login_required
 @role_required("administrador", "gestor")
 def atualizar_exame():
+    """
+    Rota PUT para atualizar exame. Requer papel administrador ou gestor.
+
+    Corpo JSON aceita:
+    { "id_exame": int, "nome_exame": str, "is_interno": bool, "valor_exame": float }
+    """
     try:
         data = request.get_json()
         id_exame = data.get('id_exame')
@@ -137,6 +183,12 @@ def atualizar_exame():
 @exame_bp.route('/exportar-exames-xls', methods=['POST'])
 @login_required
 def exportar_excel():
+    """
+    Rota POST que gera e envia um arquivo .xlsx com exames filtrados.
+
+    Retorna:
+        Arquivo para download com mimetype apropriado.
+    """
     try:
         data = request.get_json()
         id_exame = data.get('id_exame')
@@ -174,6 +226,9 @@ def exportar_excel():
 @exame_bp.route('/exportar-exames-txt', methods=['POST'])
 @login_required
 def exportar_txt():
+    """
+    Rota POST que gera e envia um arquivo .txt (tab separated) com exames filtrados.
+    """
     try:
         data = request.get_json()
         id_exame = data.get('id_exame')

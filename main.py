@@ -1,3 +1,21 @@
+"""
+Módulo main
+
+Inicializa a aplicação Flask, registra blueprints e define rotas de páginas
+(frontend) que exigem autenticação quando aplicável.
+
+Comportamento:
+- Cria o app Flask e configura CORS e secret_key.
+- Registra os blueprints: exame, cliente, usuario e atendimento.
+- Define rotas que retornam templates: login, redefinir, atendimento, relatorio, conta, cadastro.
+- As rotas que exibem páginas protegidas utilizam o decorator login_required do módulo auxiliar.auxiliar.
+
+Execução:
+    python main.py
+ou
+    set FLASK_APP=main.py && flask run
+(ajuste host/port conforme necessário).
+"""
 from flask import Flask, jsonify, render_template, session, redirect, url_for
 from functools import wraps
 from flask_cors import CORS

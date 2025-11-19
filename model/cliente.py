@@ -1,3 +1,8 @@
+"""
+Módulo model.cliente
+
+Define a entidade Cliente e a tabela associativa cliente_exame.
+"""
 from sqlalchemy import Column, Integer, String, Enum, Table, ForeignKey
 from sqlalchemy.orm import relationship
 from enums.tipos_cliente import TiposCliente
@@ -14,6 +19,16 @@ cliente_exame = Table(
 
 
 class Cliente(Base):
+    """
+    Modelo SQLAlchemy para a tabela 'cliente'.
+
+    Atributos de coluna:
+    - id_cliente (int): chave primária autoincrement.
+    - nome_cliente (str): nome do cliente.
+    - cnpj_cliente (str): CNPJ sem formatação.
+    - tipo_cliente (Enum): valor do enum TiposCliente.
+    - exames_incluidos (list[Exame]): relação many-to-many com Exame via cliente_exame.
+    """
     __tablename__ = 'cliente'
 
     id_cliente = Column(Integer, primary_key=True, autoincrement=True)

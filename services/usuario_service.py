@@ -1,3 +1,12 @@
+"""
+Módulo services.usuario_service
+
+Camada de serviço para operações de negócio relacionadas a Usuario:
+- validações básicas (ex.: email duplicado),
+- manipulação de foto via Google Drive,
+- geração e reset de senha,
+- exportação para Excel e TXT.
+"""
 from model.usuario import Usuario
 from repository.usuario_repository import UsuarioRepository
 from enums.tipos_usuario import TiposUsuario
@@ -11,9 +20,34 @@ from io import BytesIO
 
 
 class UsuarioService():
+    """
+    Serviço de alto nível para gerenciar usuários.
+
+    Atributos:
+    - repositorio: instância de UsuarioRepository.
+
+    Métodos principais:
+    - verificar_usuario(email, senha): autenticação básica.
+    - cadastrar_usuario(...): cria usuário e envia foto ao Drive.
+    - listar_todos_usuarios(): retorna usuários em JSON serializável.
+    - filtrar_usuarios(...): filtragem com paginação/ordenação.
+    - remover_usuario(id_usuario): remove usuário e exclui foto do Drive.
+    - atualizar_usuario(...): atualiza campos e foto.
+    - gerar_senha(), resetar_senha(email): utilitários para senhas.
+    - exportar_excel(...), exportar_txt(...): geram arquivos para download.
+    """
     repositorio = UsuarioRepository()
 
     def verificar_usuario(self, email_usuario: str, senha: str):
+        """
+        Valida credenciais e retorna a instância do usuário ou None.
+
+        Args:
+            email_usuario (str), senha (str)
+
+        Returns:
+            Usuario|None
+        """
         usuarios, _, _ = self.repositorio.filtrar_usuarios(
             email_usuario=email_usuario)
         usuario = usuarios[0] if usuarios else None
@@ -22,7 +56,15 @@ class UsuarioService():
         return None
 
     def cadastrar_usuario(self, nome_usuario: str,  email_usuario: str, role: TiposUsuario, senha: str, foto=None):
+        """
+        Registra um novo usuário, faz upload da foto se fornecida e retorna representação serializável.
 
+        Args:
+            nome_usuario (str), email_usuario (str), role (TiposUsuario), senha (str), foto (FileStorage|None)
+
+        Returns:
+            dict: dados do usuário criado ou dict com chave "erro" em caso de conflito.
+        """
         usuario_email = self.repositorio.filtrar_por_email(
             email_usuario=email_usuario)
 
@@ -59,6 +101,12 @@ class UsuarioService():
         }
 
     def listar_todos_usuarios(self):
+        """
+        Retorna lista de todos os usuários em formato JSON serializável.
+
+        Returns:
+            list[dict]
+        """
         usuarios = self.repositorio.listar_todos_usuarios()
         lista = []
         for usuario in usuarios:
@@ -73,6 +121,15 @@ class UsuarioService():
 
     def filtrar_usuarios(self, id_usuario: int, nome_usuario: str,  email_usuario: str, role: TiposUsuario, por_pagina=50, pagina: int = 1,
                          order_by: str = "nome_usuario", order_dir: str = "desc"):
+        """
+        Filtra usuários delegando ao repositório e formata o resultado.
+
+        Args:
+            mesmos filtros de repository.filtrar_usuarios mais paginação e ordenação.
+
+        Returns:
+            dict: {'usuarios': [...], 'total': int, 'total_filtrado': int}
+        """
         if por_pagina is not None:
             offset = (pagina - 1) * por_pagina
         else:
@@ -104,6 +161,12 @@ class UsuarioService():
         }
 
     def remover_usuario(self, id_usuario):
+        """
+        Remove um usuário por id, removendo sua foto do Drive quando existir.
+
+        Args:
+            id_usuario (int)
+        """
         usuario_a_remover = self.repositorio.filtrar_por_id(
             id_usuario=id_usuario)
         if not usuario_a_remover:
@@ -113,6 +176,14 @@ class UsuarioService():
         self.repositorio.remover_usuario(usuario_a_remover=usuario_a_remover)
 
     def atualizar_usuario(self, id_usuario, nome_usuario, email_usuario, senha, role, foto):
+        """
+        Atualiza campos de um usuário (nome, email, senha, role e foto).
+
+        Faz upload da nova foto para o Drive e remove a anterior se necessário.
+
+        Returns:
+            dict: representação serializável do usuário atualizado.
+        """
         usuario = self.repositorio.filtrar_por_id(id_usuario=id_usuario)
         if not usuario:
             raise Exception("Usuário não encontrado")
@@ -152,6 +223,12 @@ class UsuarioService():
         }
 
     def gerar_senha(self):
+        """
+        Gera uma senha aleatória contendo maiúsculas, minúsculas, números e caracteres especiais.
+
+        Returns:
+            str: nova senha gerada.
+        """
         letras_maiusculas = random.choice(string.ascii_uppercase)
         letras_minusculas = random.choice(string.ascii_lowercase)
         numeros = random.choice(string.digits)
@@ -163,6 +240,15 @@ class UsuarioService():
         return senha
 
     def resetar_senha(self, email_usuario: str):
+        """
+        Reseta a senha de um usuário e envia a nova senha por email.
+
+        Args:
+            email_usuario (str)
+
+        Returns:
+            bool|str: resultado do envio de email (depende da implementação do enviar()).
+        """
         usuario = self.repositorio.filtrar_por_email(
             email_usuario=email_usuario)
         if not usuario:
@@ -176,7 +262,12 @@ class UsuarioService():
         return email_enviado
 
     def exportar_excel(self, id_usuario: int, nome_usuario: str,  email_usuario: str, role: TiposUsuario):
+        """
+        Gera um BytesIO contendo um Excel com os usuários filtrados.
 
+        Returns:
+            BytesIO
+        """
         usuarios_filtrados = self.filtrar_usuarios(
             id_usuario=id_usuario,
             nome_usuario=nome_usuario,
@@ -215,7 +306,12 @@ class UsuarioService():
         return output
 
     def exportar_txt(self, id_usuario: int, nome_usuario: str,  email_usuario: str, role: TiposUsuario):
+        """
+        Gera um BytesIO contendo um TXT (tab-separated) com os usuários filtrados.
 
+        Returns:
+            BytesIO
+        """
         usuarios_filtrados = self.filtrar_usuarios(
             id_usuario=id_usuario,
             nome_usuario=nome_usuario,

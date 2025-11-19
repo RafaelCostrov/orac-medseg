@@ -1,3 +1,15 @@
+"""
+Módulo services.google_services.envio_email
+
+Helpers para criação e envio de emails via Gmail API usando credenciais de
+conta de serviço delegada. Depende das variáveis de ambiente:
+SERVICE_ACCOUNT_FILE, SCOPES_EMAIL, EMAIL_USER e TEMPLATE_PATH.
+
+Funções:
+- carregar_template(nome_usuario, nova_senha): carrega e substitui placeholders no template HTML.
+- criar_email(email_usuario, nome_usuario, nova_senha): constrói a mensagem MIME e retorna o payload pronto.
+- enviar(email_usuario, nome_usuario, nova_senha): envia o email usando a API Gmail.
+"""
 import os
 import base64
 from dotenv import load_dotenv
@@ -22,12 +34,34 @@ service = build('gmail', 'v1', credentials=credentials)
 
 
 def carregar_template(nome_usuario, nova_senha):
+    """
+    Lê o arquivo de template HTML e substitui os placeholders.
+
+    Args:
+        nome_usuario (str): nome do destinatário.
+        nova_senha (str): senha a ser inserida no template.
+
+    Returns:
+        str: HTML com valores preenchidos.
+    """
     with open(TEMPLATE_PATH, 'r', encoding='utf-8') as file:
         template = file.read()
         return template.replace("{{0}}", nome_usuario).replace("{{1}}", nova_senha)
 
 
 def criar_email(email_usuario, nome_usuario, nova_senha):
+    """
+    Monta a mensagem MIME multipart com o template carregado e retorna
+    o objeto compatível com a API Gmail (raw base64-url-safe).
+
+    Args:
+        email_usuario (str)
+        nome_usuario (str)
+        nova_senha (str)
+
+    Returns:
+        dict: payload {'raw': ...} pronto para envio via service.users().messages().send(...)
+    """
     email = MIMEMultipart()
     email['to'] = email_usuario
     email['from'] = formataddr(("Suporte Orac Medicina", EMAIL_USER))
@@ -40,6 +74,17 @@ def criar_email(email_usuario, nome_usuario, nova_senha):
 
 
 def enviar(email_usuario, nome_usuario, nova_senha):
+    """
+    Envia o email montado pela função criar_email usando a API Gmail.
+
+    Args:
+        email_usuario (str)
+        nome_usuario (str)
+        nova_senha (str)
+
+    Returns:
+        str: email do destinatário (usado como confirmação).
+    """
     email = criar_email(email_usuario, nome_usuario, nova_senha)
     service.users().messages().send(
         userId='me',

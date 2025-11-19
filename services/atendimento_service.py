@@ -1,3 +1,13 @@
+"""
+Módulo services.atendimento_service
+
+Camada de serviço para operações de negócio relacionadas a Atendimentos:
+- cálculos de valores, validações simples,
+- transformação de modelos para JSON,
+- exportação para Excel e TXT.
+
+Responsável por orquestrar repositórios de Atendimento, Cliente e Exame.
+"""
 from model.atendimento import Atendimento
 from repository.cliente_repository import ClienteRepository
 from repository.exame_repository import ExameRepository
@@ -11,12 +21,35 @@ from io import BytesIO
 
 
 class AtendimentoService():
+    """
+    Serviço de alto nível para gerenciar atendimentos.
+
+    Atributos:
+    - repositorio: AtendimentoRepository
+    - repositorio_cliente: ClienteRepository
+    - repositorio_exame: ExameRepository
+
+    Métodos expostos:
+    - cadastrar_atendimento(...)
+    - listar_todos_atendimentos()
+    - filtrar_atendimentos(...)
+    - remover_atendimento(id_atendimento)
+    - atualizar_atendimento(...)
+    - exportar_excel(...)
+    - exportar_txt(...)
+    """
     repositorio = AtendimentoRepository()
     repositorio_cliente = ClienteRepository()
     repositorio_exame = ExameRepository()
 
     def cadastrar_atendimento(self, tipo_atendimento: TiposAtendimento, usuario: str, valor: float, colaborador_atendimento: str, id_cliente: int,
                               ids_exames: list[int]):
+        """
+        Cria e persiste um novo atendimento.
+
+        Calcula valor total com base em exames não incluídos no plano do cliente,
+        usa data/hora atual e relaciona cliente e exames.
+        """
         exames = []
         valor_exames = 0
 
@@ -47,6 +80,11 @@ class AtendimentoService():
         self.repositorio.adicionar_atendimento(atendimento=atendimento)
 
     def listar_todos_atendimentos(self):
+        """
+        Retorna todos os atendimentos formatados em JSON serializável.
+
+        Cada atendimento inclui dados do cliente e lista de exames.
+        """
         atendimentos = self.repositorio.listar_todos_atendimentos()
         lista = []
         for atendimento in atendimentos:
@@ -88,6 +126,11 @@ class AtendimentoService():
                              usuario: str, min_valor: float, max_valor: str, colaborador_atendimento: str, tipo_cliente: list[TiposCliente],
                              is_ativo: bool, ids_clientes: list[int], ids_exames: list[int], pagina: int = 1, por_pagina=50,
                              order_by: str = "data_atendimento", order_dir: str = "desc"):
+        """
+        Filtra atendimentos delegando ao repositório e formata o resultado para a API.
+
+        Retorna um dicionário com total, total_filtrado, lista de atendimentos e valor_total.
+        """
         if por_pagina is not None:
             offset = (pagina - 1) * por_pagina
         else:
@@ -117,7 +160,7 @@ class AtendimentoService():
             exames_atendimento = atendimento.exames_atendimento
             if not exames_atendimento:
                 json_exame = {
-                    "id_exame": None,
+                    "id_exame": 0,
                     "nome_exame": "Exame removido",
                     "valor_exame": 0,
                     "is_interno": False
@@ -147,7 +190,7 @@ class AtendimentoService():
                 }
             else:
                 json_cliente = {
-                    "id_cliente": None,
+                    "id_cliente": 0,
                     "nome_cliente": "Empresa removida",
                     "tipo_cliente": "Removido"
                 }
@@ -172,10 +215,18 @@ class AtendimentoService():
         }
 
     def remover_atendimento(self, id_atendimento):
+        """
+        Remove atendimento por id (delegado ao repositório).
+        """
         self.repositorio.remover_atendimento(id_atendimento=id_atendimento)
 
     def atualizar_atendimento(self, id_atendimento, data_atendimento, tipo_atendimento, usuario, valor,
                               colaborador_atendimento, is_ativo, id_cliente, ids_exames):
+        """
+        Atualiza um atendimento, recalculando valores e relacionamentos quando necessário.
+
+        Retorna a representação JSON do atendimento atualizado.
+        """
         atendimento = self.repositorio.filtrar_por_id(
             id_atendimento=id_atendimento)
         valor_exames = 0
@@ -257,6 +308,9 @@ class AtendimentoService():
 
     def exportar_excel(self, id_atendimento: str, min_data: str, max_data: str, tipo_atendimento: TiposAtendimento, usuario: str, min_valor: float,
                        max_valor: str, colaborador_atendimento: str, tipo_cliente: TiposCliente, is_ativo: bool, ids_clientes: list[int], ids_exames: list[int]):
+        """
+        Gera um BytesIO com um arquivo Excel contendo os atendimentos filtrados.
+        """
         atendimentos_filtrados = self.filtrar_atendimentos(
             id_atendimento=id_atendimento,
             min_data=min_data,
@@ -333,6 +387,9 @@ class AtendimentoService():
 
     def exportar_txt(self, id_atendimento: str, min_data: str, max_data: str, tipo_atendimento: TiposAtendimento, usuario: str, min_valor: float,
                      max_valor: str, colaborador_atendimento: str, tipo_cliente: TiposCliente, is_ativo: bool, ids_clientes: list[int], ids_exames: list[int]):
+        """
+        Gera um BytesIO com um arquivo TXT (tab-separated) contendo os atendimentos filtrados.
+        """
         atendimentos_filtrados = self.filtrar_atendimentos(
             id_atendimento=id_atendimento,
             min_data=min_data,

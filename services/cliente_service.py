@@ -1,3 +1,12 @@
+"""
+Módulo services.cliente_service
+
+Contém a camada de serviço para operações de negócio relacionadas a Cliente:
+- validações simples (ex.: CNPJ duplicado),
+- transformação de modelos para JSON,
+- exportação para Excel e TXT,
+- integração com serviço externo para consulta de nome por CNPJ.
+"""
 from model.cliente import Cliente
 from repository.cliente_repository import ClienteRepository
 from repository.exame_repository import ExameRepository
@@ -8,11 +17,39 @@ import requests
 
 
 class ClienteService():
+    """
+    Serviço de alto nível para gerenciar clientes.
+
+    Atributos:
+    - repositorio: instância de ClienteRepository.
+    - repositorio_exame: instância de ExameRepository.
+
+    Métodos expostos:
+    - cadastrar_cliente(...)
+    - listar_todos_clientes()
+    - filtrar_clientes(...)
+    - remover_cliente(id_cliente)
+    - atualizar_cliente(...)
+    - buscar_cnpj(cnpj)
+    - exportar_excel(...)
+    - exportar_txt(...)
+    """
     repositorio = ClienteRepository()
     repositorio_exame = ExameRepository()
 
     def cadastrar_cliente(self, nome_cliente: str, cnpj_cliente: str, tipo_cliente: TiposCliente, exames_incluidos: list[int]):
+        """
+        Registra um novo cliente após validação de CNPJ duplicado.
 
+        Args:
+            nome_cliente (str)
+            cnpj_cliente (str)
+            tipo_cliente (TiposCliente)
+            exames_incluidos (list[int]): lista de ids de exames.
+
+        Returns:
+            dict|None: dicionário com erro quando houver CNPJ duplicado, caso contrário None.
+        """
         cliente_cnpj = self.repositorio.filtrar_por_cnpj(
             cnpj_cliente=cnpj_cliente)
 
@@ -35,6 +72,12 @@ class ClienteService():
         self.repositorio.adicionar_cliente(cliente=cliente)
 
     def listar_todos_clientes(self):
+        """
+        Retorna todos os clientes formatados em JSON serializável.
+
+        Returns:
+            list[dict]: lista de clientes com seus exames no formato dicionário.
+        """
         clientes = self.repositorio.listar_todos_clientes()
         lista = []
         for cliente in clientes:
@@ -60,6 +103,18 @@ class ClienteService():
     def filtrar_clientes(self, id_cliente: int, nome_cliente: str, cnpj_cliente: str, tipo_cliente: list[TiposCliente],
                          exames_incluidos: list[int], por_pagina=50, pagina: int = 1,
                          order_by: str = "nome_cliente", order_dir: str = "desc"):
+        """
+        Realiza a filtragem de clientes delegando ao repositório e formatando o resultado.
+
+        Args:
+            id_cliente, nome_cliente, cnpj_cliente, tipo_cliente, exames_incluidos: filtros.
+            por_pagina (int|None): quantos itens por página (None para sem paginação).
+            pagina (int): página atual.
+            order_by (str), order_dir (str): ordenação.
+
+        Returns:
+            dict: {'clientes': [...], 'total': int, 'total_filtrado': int}
+        """
         if por_pagina is not None:
             offset = (pagina - 1) * por_pagina
         else:
@@ -103,9 +158,23 @@ class ClienteService():
         }
 
     def remover_cliente(self, id_cliente):
+        """
+        Remove cliente por id.
+
+        Args:
+            id_cliente (int)
+        """
         self.repositorio.remover_cliente(id_cliente=id_cliente)
 
     def atualizar_cliente(self, id_cliente: int, nome_cliente: str, cnpj_cliente: str, tipo_cliente: TiposCliente, exames_incluidos: list[int]):
+        """
+        Atualiza um cliente existente e retorna sua representação JSON.
+
+        Verifica duplicidade de CNPJ antes de persistir.
+
+        Returns:
+            dict: cliente atualizado em formato serializável ou dict {'erro': ...}.
+        """
         cliente = self.repositorio.filtrar_por_id(id_cliente=id_cliente)
 
         cliente_cnpj = self.repositorio.filtrar_por_cnpj(
@@ -149,6 +218,15 @@ class ClienteService():
         return json_cliente
 
     def buscar_cnpj(self, cnpj: str):
+        """
+        Consulta um serviço externo (receitaws) para recuperar o nome da empresa pelo CNPJ.
+
+        Args:
+            cnpj (str)
+
+        Returns:
+            str|None: nome retornado pela API ou None se indisponível.
+        """
         url = f"https://receitaws.com.br/v1/cnpj/{cnpj}"
         headers = {
             "User-Agent": "orac-med/1.0",
@@ -160,7 +238,15 @@ class ClienteService():
         return nome
 
     def exportar_excel(self, id_cliente: int, nome_cliente: str, cnpj_cliente: str, tipo_cliente: TiposCliente, exames_incluidos: list[int]):
+        """
+        Gera um arquivo Excel (BytesIO) com os clientes filtrados.
 
+        Args:
+            mesmos filtros de filtrar_clientes
+
+        Returns:
+            BytesIO: arquivo Excel pronto para envio via Flask send_file.
+        """
         clientes_filtrados = self.filtrar_clientes(
             id_cliente=id_cliente,
             nome_cliente=nome_cliente,
@@ -207,7 +293,12 @@ class ClienteService():
         return output
 
     def exportar_txt(self, id_cliente: int, nome_cliente: str, cnpj_cliente: str, tipo_cliente: TiposCliente, exames_incluidos: list[int]):
+        """
+        Gera um arquivo TXT (tab-separated) com os clientes filtrados.
 
+        Returns:
+            BytesIO: fluxo pronto para envio.
+        """
         clientes_filtrados = self.filtrar_clientes(
             id_cliente=id_cliente,
             nome_cliente=nome_cliente,

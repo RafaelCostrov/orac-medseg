@@ -1,3 +1,13 @@
+"""
+Módulo routes.atendimento_routes
+
+Define as rotas Flask para operações relacionadas a Atendimentos:
+- cadastro, listagem, filtragem, atualização,
+- exportação para XLS e TXT.
+
+Cada rota aplica decoradores de autenticação/autorização do módulo auxiliar.auxiliar.
+As rotas recebem e retornam JSON (exceto endpoints que retornam arquivos).
+"""
 from flask import Blueprint, request, jsonify, send_file, session
 from services.atendimento_service import AtendimentoService
 from datetime import datetime
@@ -11,6 +21,21 @@ service = AtendimentoService()
 @atendimento_bp.route('/cadastrar-atendimento', methods=['POST'])
 @login_required
 def cadastrar_atendimento():
+    """
+    Rota POST para cadastrar um novo atendimento.
+
+    Corpo JSON esperado:
+    {
+      "tipo_atendimento": str,
+      "valor": float | None,
+      "colaborador_atendimento": str,
+      "id_cliente": int,
+      "ids_exames": [int]
+    }
+
+    Retorna:
+        201 em sucesso, 400 em erro.
+    """
     try:
         data = request.get_json()
         tipo_atendimento = data.get('tipo_atendimento')
@@ -41,6 +66,12 @@ def cadastrar_atendimento():
 @atendimento_bp.route('/listar-atendimentos')
 @login_required
 def listar_todos_atendimentos():
+    """
+    Rota GET para listar todos os atendimentos.
+
+    Retorna:
+        200 com JSON contendo lista de atendimentos, 400 em erro.
+    """
     try:
         atendimentos = service.listar_todos_atendimentos()
         return jsonify({
@@ -57,6 +88,16 @@ def listar_todos_atendimentos():
 @atendimento_bp.route('/filtrar-atendimentos', methods=['POST'])
 @login_required
 def filtrar_atendimentos():
+    """
+    Rota POST para filtrar atendimentos com paginação e ordenação.
+
+    Corpo JSON aceita filtros:
+    id_atendimento, min_data, max_data, tipo_atendimento, usuario, min_valor, max_valor,
+    colaborador_atendimento, tipo_cliente, is_ativo, ids_clientes, ids_exames, pagina, por_pagina, order_by, order_dir
+
+    Retorna:
+        200 com resultados filtrados ou 400 em erro.
+    """
     try:
         data = request.get_json()
         id_atendimento = data.get('id_atendimento')
@@ -110,6 +151,23 @@ def filtrar_atendimentos():
 @login_required
 @role_required("administrador", "gestor")
 def atualizar_atendimento():
+    """
+    Rota PUT para atualizar um atendimento existente.
+
+    Corpo JSON esperado:
+    {
+      "id_atendimento": int,
+      "data_atendimento": "DD/MM/YYYY" | None,
+      "tipo_atendimento": str | None,
+      "valor": float | None,
+      "colaborador_atendimento": str | None,
+      "is_ativo": bool | None,
+      "id_cliente": int | None,
+      "ids_exames": [int] | None
+    }
+
+    Requer papel administrador ou gestor.
+    """
     try:
         data = request.get_json()
         id_atendimento = data.get('id_atendimento')
@@ -148,6 +206,11 @@ def atualizar_atendimento():
 @atendimento_bp.route('/exportar-atendimentos-xls', methods=['POST'])
 @login_required
 def exportar_excel():
+    """
+    Rota POST que gera e envia um arquivo .xlsx com atendimentos filtrados.
+
+    Recebe filtro no corpo JSON em 'filtrosAtuais' e retorna o arquivo para download.
+    """
     try:
         data = request.get_json().get("filtrosAtuais")
         id_atendimento = data.get('id_atendimento')
@@ -199,6 +262,11 @@ def exportar_excel():
 @atendimento_bp.route('/exportar-atendimentos-txt', methods=['POST'])
 @login_required
 def exportar_txt():
+    """
+    Rota POST que gera e envia um arquivo .txt (tab separated) com atendimentos filtrados.
+
+    Recebe filtro no corpo JSON em 'filtrosAtuais' e retorna o arquivo para download.
+    """
     try:
         data = request.get_json().get("filtrosAtuais")
         id_atendimento = data.get('id_atendimento')
